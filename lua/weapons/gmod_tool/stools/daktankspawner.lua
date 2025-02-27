@@ -36,6 +36,54 @@ TOOL.crewcolors = {
 }
 
 local DTTE = DTTE
+local Classes = DTTE.Classes
+
+local function UpdateGenericEntity(Tool, TraceEnt, EntClass, UpdateString, SetToolModel)
+	if IsValid(TraceEnt) and TraceEnt:GetClass() == EntClass then
+		if SetToolModel then
+			TraceEnt.DakOwner = Tool:GetOwner()
+		end
+
+		if EntClass == "dak_temotor" then
+			TraceEnt.DakSound = Tool.DakSound
+		end
+
+		TraceEnt.DakName = Tool.DakName
+		TraceEnt.DakModel = Tool.DakModel
+		TraceEnt.DakMaxHealth = Tool.DakMaxHealth
+		TraceEnt.DakHealth = Tool.DakMaxHealth
+		TraceEnt:PhysicsDestroy()
+		TraceEnt:SetModel(TraceEnt.DakModel)
+		TraceEnt:PhysicsInit(SOLID_VPHYSICS)
+		TraceEnt:SetMoveType(MOVETYPE_VPHYSICS)
+		TraceEnt:SetSolid(SOLID_VPHYSICS)
+		Tool:GetOwner():ChatPrint(UpdateString .. " updated.")
+	else
+		if EntClass == "dak_temotor" then
+			Tool.spawnedent.DakSound = Tool.DakSound
+		end
+
+		Tool.spawnedent.DakName = Tool.DakName
+		Tool.spawnedent.DakModel = Tool.DakModel
+		Tool.spawnedent.DakMaxHealth = Tool.DakMaxHealth
+		Tool.spawnedent.DakHealth = Tool.DakMaxHealth
+
+		if SetToolModel then
+			Tool.spawnedent.DakOwner = Tool:GetOwner()
+			Tool.spawnedent:PhysicsDestroy()
+			Tool.spawnedent:SetModel(Tool.DakModel)
+			Tool.spawnedent:PhysicsInit(SOLID_VPHYSICS)
+			Tool.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
+			Tool.spawnedent:SetSolid(SOLID_VPHYSICS)
+
+			if EntClass == "dak_crew" then
+				Tool.spawnedent:SetColor(Tool.crewcolors[math.random(1,8)])
+			end
+		else
+			Tool.spawnedent:SetModel(Tool.spawnedent.DakModel)
+		end
+	end
+end
 
 --Main spawning function, creates entities based on the options selected in the menu and updates current entities
 function TOOL:LeftClick( trace )
@@ -46,11 +94,10 @@ function TOOL:LeftClick( trace )
 			self.spawnedent = ents.Create(spawnent)
 			if ( !IsValid( self.spawnedent ) ) then return end
 			self.spawnedent:SetPos(Target+Vector(0,0,2*self.spawnedent:OBBMins().z))
-			self.spawnedent:SetAngles( Angle(0,0,0))
+			self.spawnedent:SetAngles( angle_zero )
 		end
 		if (trace.Entity:GetClass() == "dak_gun") or (trace.Entity:GetClass() == "dak_laser") or (trace.Entity:GetClass() == "dak_xpulselaser") or (trace.Entity:GetClass() == "dak_launcher") or (trace.Entity:GetClass() == "dak_lams") or (trace.Entity:GetClass() == "dak_tegun") or (trace.Entity:GetClass() == "dak_teautogun") or (trace.Entity:GetClass() == "dak_temachinegun") then
 			if (self:GetClientInfo("SpawnEnt") == "dak_gun") or (self:GetClientInfo("SpawnEnt") == "dak_laser") or (self:GetClientInfo("SpawnEnt") == "dak_xpulselaser") or (self:GetClientInfo("SpawnEnt") == "dak_launcher") or (self:GetClientInfo("SpawnEnt") == "dak_lams") or (self:GetClientInfo("SpawnEnt") == "dak_tegun") or (self:GetClientInfo("SpawnEnt") == "dak_teautogun")or (self:GetClientInfo("SpawnEnt") == "dak_temachinegun") then
-				local Target = trace.HitPos
 				local spawnent = self:GetClientInfo("SpawnEnt")
 				self.spawnedent = ents.Create(spawnent)
 				if ( !IsValid( self.spawnedent ) ) then return end
@@ -64,7 +111,6 @@ function TOOL:LeftClick( trace )
 		end
 		if trace.Entity:GetClass() == "dak_tegearbox" then
 			if self:GetClientInfo("SpawnEnt") == "dak_tegearboxnew" then
-				local Target = trace.HitPos
 				local spawnent = self:GetClientInfo("SpawnEnt")
 				self.spawnedent = ents.Create(spawnent)
 				if ( !IsValid( self.spawnedent ) ) then return end
@@ -78,7 +124,6 @@ function TOOL:LeftClick( trace )
 		end
 		if trace.Entity:GetClass() == "dak_tegearboxnew" then
 			if self:GetClientInfo("SpawnEnt") == "dak_tegearbox" then
-				local Target = trace.HitPos
 				local spawnent = self:GetClientInfo("SpawnEnt")
 				self.spawnedent = ents.Create(spawnent)
 				if ( !IsValid( self.spawnedent ) ) then return end
@@ -91,9 +136,11 @@ function TOOL:LeftClick( trace )
 			end
 		end
 	--MOBILITY--
-	    --Turret
-	    local Selection = self:GetClientInfo("SpawnSettings")
-	    self.IsAmmoCrate = 0
+		--Turret
+		local Selection = self:GetClientInfo("SpawnSettings")
+		local SelectedClass = {}
+		self.IsAmmoCrate = 0
+
 		if Selection == "STMotor" then
 			self.DakMaxHealth = 10
 			self.DakHealth = 10
@@ -132,84 +179,23 @@ function TOOL:LeftClick( trace )
 			self.DakModel = "models/daktanks/crewdriver.mdl"
 		end
 		--Fuel
-		if Selection == "MicroFuel" then
-			self.DakMaxHealth = 10
-			self.DakHealth = 10
-			self.DakName = "Micro Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank1.mdl"
-		end
-		if Selection == "SmallFuel" then
-			self.DakMaxHealth = 20
-			self.DakHealth = 20
-			self.DakName = "Small Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank2.mdl"
-		end
-		if Selection == "StandardFuel" then
-			self.DakMaxHealth = 30
-			self.DakHealth = 30
-			self.DakName = "Standard Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank3.mdl"
-		end
-		if Selection == "LargeFuel" then
-			self.DakMaxHealth = 40
-			self.DakHealth = 40
-			self.DakName = "Large Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank4.mdl"
-		end
-		if Selection == "HugeFuel" then
-			self.DakMaxHealth = 50
-			self.DakHealth = 50
-			self.DakName = "Huge Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank5.mdl"
-		end
-		if Selection == "UltraFuel" then
-			self.DakMaxHealth = 60
-			self.DakHealth = 60
-			self.DakName = "Ultra Fuel Tank"
-			self.DakModel = "models/daktanks/fueltank6.mdl"
+		SelectedClass = Classes.FuelTanks[Selection]
+
+		if SelectedClass then
+			self.DakName = Selection
+			self.DakHealth = SelectedClass.MaxHealth
+			self.DakMaxHealth = SelectedClass.MaxHealth
+			self.DakModel = SelectedClass.Model
 		end
 		--Engines
-		if Selection == "MicroEngine" then
-			self.DakName = "Micro Engine"
-			self.DakHealth = 5
-			self.DakMaxHealth = 5
-			self.DakModel = "models/daktanks/engine1.mdl"
-			self.DakSound = "daktanks/engine/enginemicro.wav"
-		end
-		if Selection == "SmallEngine" then
-			self.DakName = "Small Engine"
-			self.DakHealth = 20
-			self.DakMaxHealth = 20
-			self.DakModel = "models/daktanks/engine2.mdl"
-			self.DakSound = "daktanks/engine/enginesmall.wav"
-		end
-		if Selection == "StandardEngine" then
-			self.DakName = "Standard Engine"
-			self.DakHealth = 45
-			self.DakMaxHealth = 45
-			self.DakModel = "models/daktanks/engine3.mdl"
-			self.DakSound = "daktanks/engine/enginestandard.wav"
-		end
-		if Selection == "LargeEngine" then
-			self.DakName = "Large Engine"
-			self.DakHealth = 90
-			self.DakMaxHealth = 90
-			self.DakModel = "models/daktanks/engine4.mdl"
-			self.DakSound = "daktanks/engine/enginelarge.wav"
-		end
-		if Selection == "HugeEngine" then
-			self.DakName = "Huge Engine"
-			self.DakHealth = 150
-			self.DakMaxHealth = 150
-			self.DakModel = "models/daktanks/engine5.mdl"
-			self.DakSound = "daktanks/engine/enginehuge.wav"
-		end
-		if Selection == "UltraEngine" then
-			self.DakName = "Ultra Engine"
-			self.DakHealth = 360
-			self.DakMaxHealth = 360
-			self.DakModel = "models/daktanks/engine6.mdl"
-			self.DakSound = "daktanks/engine/engineultra.wav"
+		SelectedClass = Classes.Engines[Selection]
+
+		if SelectedClass then
+			self.DakName = Selection
+			self.DakHealth = SelectedClass.MaxHealth
+			self.DakMaxHealth = SelectedClass.MaxHealth
+			self.DakModel = SelectedClass.Model
+			self.DakSound = SelectedClass.Sound
 		end
 		--GEARBOXES
 		if Selection == "MicroGearboxF" then
@@ -304,485 +290,18 @@ function TOOL:LeftClick( trace )
 			self.DakModel = "models/daktanks/alclip3.mdl"
 		end
 		--GUNS--
-		if Selection == "Cannon" then
-			self.DakGunType = "Cannon"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
+		SelectedClass = Classes.Weapons[Selection]
+
+		if SelectedClass then
+			local MinCal = SelectedClass.MinCaliber
+			local MaxCal = SelectedClass.MaxCaliber
+
+			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")), 2), MinCal, MaxCal)
+			self.DakGunType = Selection
 			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Cannon"
-			self.DakModel = "models/daktanks/cannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-		end
-		if Selection == "Long Cannon" then
-			self.DakGunType = "Long Cannon"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Long Cannon"
-			self.DakModel = "models/daktanks/longcannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-
-		end
-		if Selection == "Short Cannon" then
-			self.DakGunType = "Short Cannon"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Short Cannon"
-			self.DakModel = "models/daktanks/shortcannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-		end
-		if Selection == "Howitzer" then
-			self.DakGunType = "Howitzer"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),50,240)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Howitzer"
-			self.DakModel = "models/daktanks/howitzer100mm2.mdl"
-
-			if self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/h50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 105 then
-				self.DakFireSound = "daktanks/h75.mp3"
-			end
-			if self.DakCaliber >= 105 and self.DakCaliber < 122 then
-				self.DakFireSound = "daktanks/h105.mp3"
-			end
-			if self.DakCaliber >= 122 and self.DakCaliber < 155 then
-				self.DakFireSound = "daktanks/h122.mp3"
-			end
-			if self.DakCaliber >= 155 and self.DakCaliber < 203 then
-				self.DakFireSound = "daktanks/h155.mp3"
-			end
-			if self.DakCaliber >= 203 and self.DakCaliber < 420 then
-				self.DakFireSound = "daktanks/h203.mp3"
-			end
-			if self.DakCaliber >= 420 then
-				self.DakFireSound = "daktanks/h420.mp3"
-			end
-		end
-		if Selection == "Mortar" then
-			self.DakGunType = "Mortar"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,420)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Mortar"
-			self.DakModel = "models/daktanks/mortar100mm2.mdl"
-
-			if self.DakCaliber < 90 then
-				self.DakFireSound = "daktanks/m60.mp3"
-			end
-			if self.DakCaliber >= 90 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/m90.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 150 then
-				self.DakFireSound = "daktanks/m120.mp3"
-			end
-			if self.DakCaliber >= 150 and self.DakCaliber < 240 then
-				self.DakFireSound = "daktanks/m150.mp3"
-			end
-			if self.DakCaliber >= 240 and self.DakCaliber < 280 then
-				self.DakFireSound = "daktanks/m240.mp3"
-			end
-			if self.DakCaliber >= 280 and self.DakCaliber < 420 then
-				self.DakFireSound = "daktanks/m280.mp3"
-			end
-			if self.DakCaliber >= 420 and self.DakCaliber < 600 then
-				self.DakFireSound = "daktanks/m420.mp3"
-			end
-			if self.DakCaliber >= 600 then
-				self.DakFireSound = "daktanks/m600.mp3"
-			end
-		end
-		if Selection == "Smoke Launcher" then
-			self.DakGunType = "Smoke Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,100)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Smoke Launcher"
-			self.DakModel = "models/daktanks/smokelauncher100mm.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/grenade_launcher_01.mp3"
-		end
-		if Selection == "Grenade Launcher" then
-			self.DakGunType = "Grenade Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,45)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Grenade Launcher"
-			self.DakModel = "models/daktanks/grenadelauncher100mm.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/grenade_launcher_01.mp3"
-		end
-		if Selection == "Autoloader" then
-			self.DakGunType = "Autoloader"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autoloader"
-			self.DakModel = "models/daktanks/cannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-		end
-		if Selection == "Long Autoloader" then
-			self.DakGunType = "Long Autoloader"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Long Autoloader"
-			self.DakModel = "models/daktanks/longcannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-
-		end
-		if Selection == "Short Autoloader" then
-			self.DakGunType = "Short Autoloader"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Short Autoloader"
-			self.DakModel = "models/daktanks/shortcannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/c25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/c37.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/c50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 100 then
-				self.DakFireSound = "daktanks/c75.mp3"
-			end
-			if self.DakCaliber >= 100 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/c100.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 152 then
-				self.DakFireSound = "daktanks/c120.mp3"
-			end
-			if self.DakCaliber >= 152 and self.DakCaliber < 200 then
-				self.DakFireSound = "daktanks/c152.mp3"
-			end
-			if self.DakCaliber >= 200 then
-				self.DakFireSound = "daktanks/c200.mp3"
-			end
-		end
-		if Selection == "Autoloading Howitzer" then
-			self.DakGunType = "Autoloading Howitzer"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),50,240)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakModel = "models/daktanks/howitzer100mm2.mdl"
-
-			if self.DakCaliber < 75 then
-				self.DakFireSound = "daktanks/h50.mp3"
-			end
-			if self.DakCaliber >= 75 and self.DakCaliber < 105 then
-				self.DakFireSound = "daktanks/h75.mp3"
-			end
-			if self.DakCaliber >= 105 and self.DakCaliber < 122 then
-				self.DakFireSound = "daktanks/h105.mp3"
-			end
-			if self.DakCaliber >= 122 and self.DakCaliber < 155 then
-				self.DakFireSound = "daktanks/h122.mp3"
-			end
-			if self.DakCaliber >= 155 and self.DakCaliber < 203 then
-				self.DakFireSound = "daktanks/h155.mp3"
-			end
-			if self.DakCaliber >= 203 and self.DakCaliber < 420 then
-				self.DakFireSound = "daktanks/h203.mp3"
-			end
-			if self.DakCaliber >= 420 then
-				self.DakFireSound = "daktanks/h420.mp3"
-			end
-		end
-		if Selection == "Autoloading Mortar" then
-			self.DakGunType = "Autoloading Mortar"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,420)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autoloading Mortar"
-			self.DakModel = "models/daktanks/mortar100mm2.mdl"
-
-			if self.DakCaliber < 90 then
-				self.DakFireSound = "daktanks/m60.mp3"
-			end
-			if self.DakCaliber >= 90 and self.DakCaliber < 120 then
-				self.DakFireSound = "daktanks/m90.mp3"
-			end
-			if self.DakCaliber >= 120 and self.DakCaliber < 150 then
-				self.DakFireSound = "daktanks/m120.mp3"
-			end
-			if self.DakCaliber >= 150 and self.DakCaliber < 240 then
-				self.DakFireSound = "daktanks/m150.mp3"
-			end
-			if self.DakCaliber >= 240 and self.DakCaliber < 280 then
-				self.DakFireSound = "daktanks/m240.mp3"
-			end
-			if self.DakCaliber >= 280 and self.DakCaliber < 420 then
-				self.DakFireSound = "daktanks/m280.mp3"
-			end
-			if self.DakCaliber >= 420 and self.DakCaliber < 600 then
-				self.DakFireSound = "daktanks/m420.mp3"
-			end
-			if self.DakCaliber >= 600 then
-				self.DakFireSound = "daktanks/m600.mp3"
-			end
-		end
-		if Selection == "MG" then
-			self.DakGunType = "MG"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),5,25)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Machine Gun"
-			self.DakModel = "models/daktanks/machinegun100mm.mdl"
-
-			if self.DakCaliber < 7.62 then
-				self.DakFireSound = "daktanks/5mm.mp3"
-			end
-			if self.DakCaliber >= 7.62 and self.DakCaliber < 9 then
-				self.DakFireSound = "daktanks/7mm.mp3"
-			end
-			if self.DakCaliber >= 9 and self.DakCaliber < 12.7 then
-				self.DakFireSound = "daktanks/9mm.mp3"
-			end
-			if self.DakCaliber >= 12.7 and self.DakCaliber < 14.5 then
-				self.DakFireSound = "daktanks/12mm.mp3"
-			end
-			if self.DakCaliber >= 14.5 then
-				self.DakFireSound = "daktanks/14mm.mp3"
-			end
-		end
-		if Selection == "Flamethrower" then
-			self.DakGunType = "Flamethrower"
-			self.DakCaliber = 10
-			self.DakMaxHealth = 10
-			self.DakName = "Flamethrower"
-			self.DakModel = "models/daktanks/flamethrower.mdl"
-			self.DakFireSound = "daktanks/flamerfire.mp3"
-		end
-		if Selection == "HMG" then
-			self.DakGunType = "HMG"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,75)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Heavy Machine Gun"
-			self.DakModel = "models/daktanks/hmg100mm2.mdl"
-
-			if self.DakCaliber < 30 then
-				self.DakFireSound = "daktanks/hmg20.mp3"
-			end
-			if self.DakCaliber >= 30 and self.DakCaliber < 40 then
-				self.DakFireSound = "daktanks/hmg30.mp3"
-			end
-			if self.DakCaliber >= 40 then
-				self.DakFireSound = "daktanks/hmg40.mp3"
-			end
-		end
-		if Selection == "Autocannon" then
-			self.DakGunType = "Autocannon"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,90)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autocannon"
-			self.DakModel = "models/daktanks/autocannon100mm2.mdl"
-
-			if self.DakCaliber < 37 then
-				self.DakFireSound = "daktanks/ac25.mp3"
-			end
-			if self.DakCaliber >= 37 and self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/ac37.mp3"
-			end
-			if self.DakCaliber >= 50 then
-				self.DakFireSound = "daktanks/ac50.mp3"
-			end
-		end
-		if Selection == "ATGM Launcher" then
-			self.DakGunType = "ATGM Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm ATGM Launcher"
-			self.DakModel = "models/daktanks/launcher100mm2.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-		end
-		if Selection == "Dual ATGM Launcher" then
-			self.DakGunType = "Dual ATGM Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Dual ATGM Launcher"
-			self.DakModel = "models/daktanks/duallauncher100mm2.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-		end
-		if Selection == "Autoloading ATGM Launcher" then
-			self.DakGunType = "Autoloading ATGM Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autoloading ATGM Launcher"
-			self.DakModel = "models/daktanks/launcher100mm2.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-		end
-		if Selection == "Autoloading Dual ATGM Launcher" then
-			self.DakGunType = "Autoloading Dual ATGM Launcher"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autoloading Dual ATGM Launcher"
-			self.DakModel = "models/daktanks/duallauncher100mm2.mdl"
-
-			self.DakFireSound = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-		end
-		if Selection == "Recoilless Rifle" then
-			self.DakGunType = "Recoilless Rifle"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,150)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Recoilless Rifle"
-			self.DakModel = "models/daktanks/recoillessrifle100mm2.mdl"
-
-			if self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/new/cannons/37mm/cannon_37mm_kwk36_shot_01.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 70 then
-				self.DakFireSound = "daktanks/new/cannons/57mm/cannon_57mm_zis4_shot_01.mp3"
-			end
-			if self.DakCaliber >= 70 and self.DakCaliber < 90 then
-				self.DakFireSound = "daktanks/new/cannons/85mm/cannon_85mm_zis_c53_shot_01.mp3"
-			end
-			if self.DakCaliber >= 90 and self.DakCaliber < 110 then
-				self.DakFireSound = "daktanks/new/cannons/105mm/cannon_105mm_m4_shot_01.mp3"
-			end
-			if self.DakCaliber >= 110 then
-				self.DakFireSound = "daktanks/new/cannons/120mm/cannon_120mm_rh120_shot_01.mp3"
-			end
-		end
-		if Selection == "Autoloading Recoilless Rifle" then
-			self.DakGunType = "Autoloading Recoilless Rifle"
-			self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,150)
-			self.DakMaxHealth = self.DakCaliber
-			self.DakName = self.DakCaliber.."mm Autoloading Recoilless Rifle"
-			self.DakModel = "models/daktanks/recoillessrifle100mm2.mdl"
-
-			if self.DakCaliber < 50 then
-				self.DakFireSound = "daktanks/new/cannons/37mm/cannon_37mm_kwk36_shot_01.mp3"
-			end
-			if self.DakCaliber >= 50 and self.DakCaliber < 70 then
-				self.DakFireSound = "daktanks/new/cannons/57mm/cannon_57mm_zis4_shot_01.mp3"
-			end
-			if self.DakCaliber >= 70 and self.DakCaliber < 90 then
-				self.DakFireSound = "daktanks/new/cannons/85mm/cannon_85mm_zis_c53_shot_01.mp3"
-			end
-			if self.DakCaliber >= 90 and self.DakCaliber < 110 then
-				self.DakFireSound = "daktanks/new/cannons/105mm/cannon_105mm_m4_shot_01.mp3"
-			end
-			if self.DakCaliber >= 110 then
-				self.DakFireSound = "daktanks/new/cannons/120mm/cannon_120mm_rh120_shot_01.mp3"
-			end
+			self.DakName = self.DakCaliber .. "mm " .. (SelectedClass.Name or Selection)
+			self.DakModel = SelectedClass.Model
+			self.DakFireSound = SelectedClass.SetSound(self.DakCaliber)
 		end
 		--AMMO--
 		--Define variables--
@@ -929,7 +448,7 @@ function TOOL:LeftClick( trace )
 			end
 		    --huge if statement that checks to see if its an ammo crate of any type
 			self.DakIsExplosive = true
-			self.DakAmmoType = self.DakCaliber.."mm"..self.GunType..self.AmmoType.."Ammo"
+			self.DakAmmoType = self.DakCaliber .. "mm" .. self.GunType .. self.AmmoType .. "Ammo"
 		end
 		--Flamethrower--
 		if Selection == "Flamethrower Fuel" then
@@ -1071,244 +590,25 @@ function TOOL:LeftClick( trace )
 			end
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_teautoloadingmodule" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_teautoloadingmodule" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakOwner = self:GetOwner()
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint("Magazine updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakOwner = self:GetOwner()
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent:PhysicsDestroy()
-					self.spawnedent:SetModel(self.DakModel)
-					self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-					self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-					self.spawnedent:SetSolid(SOLID_VPHYSICS)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakOwner = self:GetOwner()
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent:PhysicsDestroy()
-				self.spawnedent:SetModel(self.DakModel)
-				self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-				self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-				self.spawnedent:SetSolid(SOLID_VPHYSICS)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_teautoloadingmodule", "Magazine", true)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_turretmotor" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_turretmotor" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakOwner = self:GetOwner()
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint("Turret motor updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakOwner = self:GetOwner()
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent:PhysicsDestroy()
-					self.spawnedent:SetModel(self.DakModel)
-					self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-					self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-					self.spawnedent:SetSolid(SOLID_VPHYSICS)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakOwner = self:GetOwner()
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent:PhysicsDestroy()
-				self.spawnedent:SetModel(self.DakModel)
-				self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-				self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-				self.spawnedent:SetSolid(SOLID_VPHYSICS)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_turretmotor", "Turret motor", true)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_crew" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_crew" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakOwner = self:GetOwner()
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint("Crew updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakOwner = self:GetOwner()
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent:PhysicsDestroy()
-					self.spawnedent:SetModel(self.DakModel)
-					self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-					self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-					self.spawnedent:SetSolid(SOLID_VPHYSICS)
-					self.spawnedent:SetColor(self.crewcolors[math.random(1,8)])
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakOwner = self:GetOwner()
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent:PhysicsDestroy()
-				self.spawnedent:SetModel(self.DakModel)
-				self.spawnedent:PhysicsInit(SOLID_VPHYSICS)
-				self.spawnedent:SetMoveType(MOVETYPE_VPHYSICS)
-				self.spawnedent:SetSolid(SOLID_VPHYSICS)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_crew", "Crew", true)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_temotor" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_temotor" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakHealth
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity.DakSound = self.DakSound
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint( "Engine updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakHealth
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent.DakSound = self.DakSound
-					self.spawnedent:SetModel(self.spawnedent.DakModel)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakHealth
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent.DakSound = self.DakSound
-				self.spawnedent:SetModel(self.spawnedent.DakModel)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_temotor", "Engine", false)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_tefuel" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_tefuel" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint( "Fuel updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent:SetModel(self.spawnedent.DakModel)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent:SetModel(self.spawnedent.DakModel)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_tefuel", "Fuel tank", false)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_tegearbox" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_tegearbox" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint( "Gearbox updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent:SetModel(self.spawnedent.DakModel)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent:SetModel(self.spawnedent.DakModel)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_tegearbox", "Gearbox", false)
 		end
 		if self:GetClientInfo("SpawnEnt") == "dak_tegearboxnew" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_tegearboxnew" then
-					trace.Entity.DakName = self.DakName
-					trace.Entity.DakMaxHealth = self.DakMaxHealth
-					trace.Entity.DakHealth = self.DakMaxHealth
-					trace.Entity.DakModel = self.DakModel
-					trace.Entity:PhysicsDestroy()
-					trace.Entity:SetModel(trace.Entity.DakModel)
-					trace.Entity:PhysicsInit(SOLID_VPHYSICS)
-					trace.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-					trace.Entity:SetSolid(SOLID_VPHYSICS)
-					self:GetOwner():ChatPrint( "Gearbox updated.")
-				else
-					self.spawnedent.DakName = self.DakName
-					self.spawnedent.DakMaxHealth = self.DakMaxHealth
-					self.spawnedent.DakHealth = self.DakMaxHealth
-					self.spawnedent.DakModel = self.DakModel
-					self.spawnedent:SetModel(self.spawnedent.DakModel)
-				end
-			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakName
-				self.spawnedent.DakMaxHealth = self.DakMaxHealth
-				self.spawnedent.DakHealth = self.DakMaxHealth
-				self.spawnedent.DakModel = self.DakModel
-				self.spawnedent:SetModel(self.spawnedent.DakModel)
-			end
+			UpdateGenericEntity(self, trace.Entity, "dak_tegearboxnew", "Gearbox", false)
 		end
 
 		self.ScalingGun = 0
@@ -1686,7 +986,7 @@ function TOOL:RightClick( trace )
 			if trace.Entity.DakArmor == nil then
 				DTTE.SetupNewEnt(trace.Entity)
 			end
-			if trace.Entity:GetClass()=="prop_physics" then
+			if trace.Entity:GetClass() == "prop_physics" then
 				local SA = trace.Entity:GetPhysicsObject():GetSurfaceArea()
 				if trace.Entity.IsDakTekFutureTech == 1 then
 					trace.Entity.DakArmor = 1000
@@ -1696,7 +996,7 @@ function TOOL:RightClick( trace )
 						trace.Entity.DakArmor = trace.Entity:OBBMaxs().x/2
 						trace.Entity.DakIsTread = 1
 					else
-						if trace.Entity:GetClass()=="prop_physics" and not(trace.Entity.IsComposite == 1) then
+						if trace.Entity:GetClass() == "prop_physics" and not(trace.Entity.IsComposite == 1) then
 							DTTE.ArmorSanityCheck(trace.Entity)
 						end
 					end
@@ -1711,9 +1011,9 @@ function TOOL:RightClick( trace )
 				local PHP = math.Round((HP/MHP)*100, 1 )
 				if trace.Entity.IsComposite == 1 then
 					if Target.EntityMods.DakName then
-						ply:ChatPrint(Target.EntityMods.DakName..", ".. math.Round((DTCompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompKEMult),2).." Armor(mm) vs KE, ".. math.Round((DTCompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompCEMult),2).." Armor(mm) vs HEAT, ".. HP.."/"..MHP.." Health, "..PHP.."% Health")
+						ply:ChatPrint(Target.EntityMods.DakName..", ".. math.Round((DTTE.CompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompKEMult),2).." Armor(mm) vs KE, ".. math.Round((DTTE.CompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompCEMult),2).." Armor(mm) vs HEAT, ".. HP.."/"..MHP.." Health, "..PHP.."% Health")
 					else
-						ply:ChatPrint("Composite, ".. math.Round((DTCompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompKEMult),2).." Armor(mm) vs KE, ".. math.Round((DTCompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompCEMult),2).." Armor(mm) vs HEAT, ".. HP.."/"..MHP.." Health, "..PHP.."% Health")
+						ply:ChatPrint("Composite, ".. math.Round((DTTE.CompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompKEMult),2).." Armor(mm) vs KE, ".. math.Round((DTTE.CompositesTrace( Target, trace.HitPos, trace.Normal, {ply} )*trace.Entity.EntityMods.CompCEMult),2).." Armor(mm) vs HEAT, ".. HP.."/"..MHP.." Health, "..PHP.."% Health")
 					end
 				else
 					if Target:GetClass() ~= "dak_tankcore" then
@@ -1745,7 +1045,6 @@ function TOOL:RightClick( trace )
 					end
 				end
 				if Target:GetClass() == "dak_tankcore" then
-					--print(Target.Modern)
 					--if Target.Modern and Target.ColdWar then
 						ply:ChatPrint("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
 						--[[
@@ -1891,22 +1190,22 @@ function TOOL:Reload( trace )
 			end
 		end
 		local ply = self:GetOwner()
-		ply:ChatPrint("This Contraption weighs "..Mass.." kg")
+		ply:ChatPrint("This Contraption weighs " .. Mass .. " kg")
 		end
 	end
 end
 
 local function DTSpawnerEngineLabel(name, desc, health, armor, weight, speed, power, fuel)
-	local s1 = name.."\n\n"
-	local s2 = desc.."\n\n"
+	local s1 = name .. "\n\n"
+	local s2 = desc .. "\n\n"
 	local s3 = "Engine Stats:\n"
-	local s4 = "Health:                  "..health.."\n"
-	local s5 = "Armor:                  "..armor.."mm\n"
-	local s6 = "Weight:                "..weight.."kg\n"
-	local s7 = "Speed:            "..(speed*2).."km/h with 10t contraption\n"
-	local s8 = "Power:                  "..power.." HP\n"
-	local s9 = "Fuel Required:      "..fuel.."L (for full performance)"
-	return s1..s2..s3..s4..s5..s6..s7..s8..s9
+	local s4 = "Health:                  " .. health .. "\n"
+	local s5 = "Armor:                  " .. armor .. " mm\n"
+	local s6 = "Weight:                " .. weight .. " kg\n"
+	local s7 = "Speed:            " .. (speed * 2) .. " km/h with 10t contraption\n"
+	local s8 = "Power:                  " .. power .. " HP\n"
+	local s9 = "Fuel Required:      " .. fuel .. "L (for full performance)"
+	return s1 .. s2 .. s3 .. s4 .. s5 .. s6 .. s7 .. s8 .. s9
 end
 
 function TOOL.BuildCPanel( panel )
@@ -1948,23 +1247,20 @@ function TOOL.BuildCPanel( panel )
 
 	--Table containing the information of the available engines
 	local engineList = {}
-	engineList["Micro Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Micro Engine","Tiny engine for tiny tanks.","5","5","80","13","40","24"))
-	end
-	engineList["Small Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Small Engine","Small engine for light tanks and slow mediums.","20","20","265","42","125","75"))
-	end
-	engineList["Standard Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Standard Engine","Standard sized engine for medium tanks or slow heavies.","45","45","630","100","300","180"))
-	end
-	engineList["Large Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Large Engine","Large engine for heavy tanks.","90","90","1225","200","600","360"))
-	end
-	engineList["Huge Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Huge Engine","Huge engine for heavy tanks that want to move fast.","150","150","2120","333","1000","600"))
-	end
-	engineList["Ultra Engine"] = function()
-		DLabel:SetText(DTSpawnerEngineLabel("Ultra Engine","Ultra engine for use in super heavy tanks.","360","360","5020","800","2400","1440"))
+
+	for ClassName, ClassData in pairs(Classes.Engines) do
+		engineList[ClassName] = function()
+			local EngineText = DTSpawnerEngineLabel(ClassName,
+													ClassData.Description,
+													ClassData.MaxHealth,
+													ClassData.Armor,
+													ClassData.Mass,
+													ClassData.ExampleSpeed,
+													ClassData.HP,
+													ClassData.FuelReq)
+
+			DLabel:SetText(EngineText)
+		end
 	end
 
 	--Table containing the description of the available gearboxes
@@ -2050,27 +1346,35 @@ function TOOL.BuildCPanel( panel )
 
 	--Table containing the description of the fuel tanks
 	local fuelList = {}
-	fuelList["Micro Fuel Tank"] = function()
-		DLabel:SetText( "Micro Fuel Tank\n\nTiny fuel tank to run light tanks and tankettes.\n\nFuel Tank Stats:\nHealth:    10\nWeight:   65kg\nCapacity: 45L" )
-	end
-	fuelList["Small Fuel Tank"] = function()
-		DLabel:SetText( "Small Fuel Tank\n\nSmall fuel tank for light tanks and weak engined mediums.\n\nFuel Tank Stats:\nHealth:    20\nWeight:   120kg\nCapacity: 90L" )
-	end
-	fuelList["Standard Fuel Tank"] = function()
-		DLabel:SetText( "Standard Fuel Tank\n\nStandard medium tank fuel tank.\n\nFuel Tank Stats:\nHealth:    30\nWeight:   240kg\nCapacity: 180L" )
-	end
-	fuelList["Large Fuel Tank"] = function()
-		DLabel:SetText( "Large Fuel Tank\n\nLarge fuel tanks for heavies running mid sized engines.\n\nFuel Tank Stats:\nHealth:    40\nWeight:   475kg\nCapacity: 360L" )
-	end
-	fuelList["Huge Fuel Tank"] = function()
-		DLabel:SetText( "Huge Fuel Tank\n\nHuge fuel tank for heavies running large gas guzzlers.\n\nFuel Tank Stats:\nHealth:    50\nWeight:   950kg\nCapacity: 720L" )
-	end
-	fuelList["Ultra Fuel Tank"] = function()
-		DLabel:SetText( "Ultra Fuel Tank\n\nMassive fuel tank designed for super heavy tanks running the largest of engines.\n\nFuel Tank Stats:\nHealth:    60\nWeight:   1900kg\nCapacity: 1440L" )
+
+	for ClassName, ClassData in SortedPairs( Classes.FuelTanks ) do
+		fuelList[ClassName] = function()
+			local name = ClassName .. "\n\n"
+			local desc = ClassData.Description .. "\n\n"
+			local stats = "Fuel Tank Stats:\n"
+			local health = "Health:    " .. ClassData.MaxHealth .. "\n"
+			local weight = "Weight:   " .. ClassData.Mass .. "kg\n"
+			local capacity = "Capacity: " .. ClassData.Fuel .. "L"
+
+			DLabel:SetText( name .. desc .. stats .. health .. weight .. capacity )
+		end
 	end
 
 	--Table containing the description of the available weapons
 	local gunList = {}
+	--[[
+	-- TODO: Finish breaking down this dense chunk to use the weapon class definitions instead
+	for ClassName, ClassData in SortedPairs( Classes.Weapons ) do
+		gunList[ClassName] = function()
+			local name = Caliber .. "mm " .. (ClassData.Name or ClassName) .. "\n\n"
+			local desc = ClassData.Description .. "\n\n"
+			local stats = "Weapon Stats:\n"
+			local weight = "Weight:        " .. math.Round(0.0125*((((Caliber*6.5)*(Caliber*3)*(Caliber*3))+(math.pi*(Caliber^2)*(Caliber*50))-(math.pi*((Caliber/2)^2)*(Caliber*50)))*0.001*7.8125)/1000) .. " kg\n"
+			local reloads = "Reloads: \n\n"
+
+		end
+	end
+	]]
 	gunList["ATGM Launcher"] = function()
 		DLabel:SetText( Caliber.."mm ATGM Launcher\n\nLightweight and simple ATGM launcher.\n\nWeapon Stats:\nWeight:        "..math.Round(0.0125*((((Caliber*6.5)*(Caliber*3)*(Caliber*3))+(math.pi*(Caliber^2)*(Caliber*50))-(math.pi*((Caliber/2)^2)*(Caliber*50)))*0.001*7.8125)/1000).." kg\nReloads: \n\nATGM: "..math.Round( 2*0.75*(math.pi*((Caliber*0.001*0.5)^2)*(Caliber*0.001*6.5)*3550) ,2).." seconds, Loaders: "..math.Max(math.Round( (math.pi*((Caliber*0.001*0.5)^2)*(Caliber*0.001*6.5)*3550)/25 ) , 1).. "\n\nReload Area: "..math.Round(ShellLength*10*Caliber*0.0393701,2).." inches, all directions\n\n" )
 	end
@@ -2143,7 +1447,7 @@ function TOOL.BuildCPanel( panel )
 	--AmmoData Key--1 = AP Pen Multiplier, 2 = AP Velocity, 3 = HE Pen Multiplier, 4 = HE Blast and Frag Pen Multiplier, 5 = HE Velocity, 6 = HEAT Pen Multiplier, 7 = HEAT Velocity, 8 = HESH Pen Multiplier, 9 = HESH Velocity
 
 	--Base Velocity = 29527.6
-	--Lenght Mult
+	--Length Mult
 	--AP PEN
 	--HE PEN
 	--HE FRAG/BLAST PEN
@@ -2154,158 +1458,16 @@ function TOOL.BuildCPanel( panel )
 
 	--Table containing information and settings for weapons, this is called by the Gun Type combobox
 	local gunData = {}
-	gunData["ATGM Launcher"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Anti Tank Guided Missile" }
-		DermaNumSlider:SetMinMax( 40, 180 )
-	end
-	gunData["Dual ATGM Launcher"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Anti Tank Guided Missile" }
-		DermaNumSlider:SetMinMax( 40, 180 )
-	end
-	gunData["Autoloading ATGM Launcher"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Anti Tank Guided Missile" }
-		DermaNumSlider:SetMinMax( 40, 180 )
-	end
-	gunData["Autoloading Dual ATGM Launcher"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Anti Tank Guided Missile" }
-		DermaNumSlider:SetMinMax( 40, 180 )
-	end
-	gunData["Recoilless Rifle"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 25/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "High Explosive","High Explosive Anti Tank","High Explosive Anti Tank Fin Stabilized","High Explosive Squash Head","Smoke" }
-		DermaNumSlider:SetMinMax( 20, 150 )
-	end
-	gunData["Autoloading Recoilless Rifle"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 25/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "High Explosive","High Explosive Anti Tank","High Explosive Anti Tank Fin Stabilized","High Explosive Squash Head","Smoke" }
-		DermaNumSlider:SetMinMax( 20, 150 )
-	end
-	gunData["Autocannon"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "Armor Piercing Fin Stabilized Discarding Sabot" }
-		DermaNumSlider:SetMinMax( 20, 90 )
-	end
-	gunData["Autoloader"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Long Autoloader"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 70/50
-		ShellLengthExact = 9
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Short Autoloader"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 40/50
-		ShellLengthExact = 5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Autoloading Howitzer"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 30/50
-		ShellLengthExact = 4
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Explosive Squash Head", "Anti Tank Guided Missile", "Smoke" }
-		DermaNumSlider:SetMinMax( 50, 240 )
-	end
-	gunData["Smoke Launcher"] = function()
-		EntType   = "dak_temachinegun"
-		ShellLength = 3/50
-		ShellLengthExact = 0.5
-		AmmoTypes = { "Smoke" }
-		DermaNumSlider:SetMinMax( 40, 100 )
-	end
-	gunData["Grenade Launcher"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 27/50
-		ShellLengthExact = 3.5
-		AmmoTypes = { "High Explosive", "High Explosive Anti Tank", "High Explosive Squash Head", "Smoke" }
-		DermaNumSlider:SetMinMax( 20, 45 )
-	end
-	gunData["Autoloading Mortar"] = function()
-		EntType   = "dak_teautogun"
-		ShellLength = 15/50
-		ShellLengthExact = 2.75
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Explosive Squash Head", "Anti Tank Guided Missile", "Smoke" }
-		DermaNumSlider:SetMinMax( 40, 420 )
-	end
-	gunData["Cannon"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Long Cannon"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 70/50
-		ShellLengthExact = 9
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Short Cannon"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 40/50
-		ShellLengthExact = 5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "High Explosive Squash Head", "Anti Tank Guided Missile", "Armor Piercing Fin Stabilized Discarding Sabot", "Smoke" }
-		DermaNumSlider:SetMinMax( 25, 200 )
-	end
-	gunData["Flamethrower"] = function()
-		EntType   = "dak_temachinegun"
-		AmmoTypes = {}
-	end
-	gunData["Heavy Machine Gun"] = function()
-		GunType   = "HMG"
-		EntType   = "dak_teautogun"
-		ShellLength = 40/50
-		ShellLengthExact = 5
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Velocity Armor Piercing", "Armor Piercing Discarding Sabot", "Armor Piercing Fin Stabilized Discarding Sabot" }
-		DermaNumSlider:SetMinMax( 20, 75 )
-	end
-	gunData["Howitzer"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 30/50
-		ShellLengthExact = 4
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Explosive Squash Head", "Anti Tank Guided Missile", "Smoke" }
-		DermaNumSlider:SetMinMax( 50, 240 )
-	end
-	gunData["Machine Gun"] = function()
-		GunType   = "MG"
-		EntType   = "dak_temachinegun"
-		ShellLength = 50/50
-		ShellLengthExact = 6.5
-		AmmoTypes = { "Armor Piercing" }
-		DermaNumSlider:SetMinMax( 5, 25 )
-	end
-	gunData["Mortar"] = function()
-		EntType   = "dak_tegun"
-		ShellLength = 15/50
-		ShellLengthExact = 2.75
-		AmmoTypes = { "Armor Piercing", "High Explosive", "Armor Piercing High Explosive", "High Explosive Anti Tank", "High Explosive Anti Tank Fin Stabilized", "High Explosive Squash Head", "Anti Tank Guided Missile", "Smoke"}
-		DermaNumSlider:SetMinMax( 40, 420 )
+
+	for ClassName, ClassData in SortedPairs(Classes.Weapons) do
+		gunData[ClassData.Name or ClassName] = function()
+			GunType = ClassName
+			EntType = ClassData.EntType
+			ShellLength = ClassData.ShellLengthMult
+			ShellLengthExact = ClassData.ShellLengthExact
+			AmmoTypes = ClassData.AmmoTypes
+			DermaNumSlider:SetMinMax(ClassData.MinCaliber, ClassData.MaxCaliber)
+		end
 	end
 
 	--Table containing the volume of the available ammo crates
@@ -2490,7 +1652,7 @@ function TOOL.BuildCPanel( panel )
 			DLabel:SetText( "Engines\n\nLarge gas guzzlers to get your tank moving at speeds faster than a brisk walk." )
 		else
 			engineList[EngineModel]()
-			RunConsoleCommand( "daktankspawner_SpawnSettings", string.Replace( EngineModel, " ", "" ) )
+			RunConsoleCommand( "daktankspawner_SpawnSettings", EngineModel )
 			RunConsoleCommand( "daktankspawner_SpawnEnt", "dak_temotor" )
 		end
 	end
@@ -2503,8 +1665,7 @@ function TOOL.BuildCPanel( panel )
 			DLabel:SetText( "Fuel\n\nFuel tanks are required to run your engine, there are different sizes providing different bonuses." )
 		else
 			fuelList[FuelModel]()
-			local String = string.Explode( " ", FuelModel )
-			RunConsoleCommand( "daktankspawner_SpawnSettings", String[1]..String[2] )
+			RunConsoleCommand( "daktankspawner_SpawnSettings", FuelModel )
 			RunConsoleCommand( "daktankspawner_SpawnEnt", "dak_tefuel" )
 		end
 	end
@@ -2605,50 +1766,38 @@ function TOOL.BuildCPanel( panel )
 			if AmmoTypeSelect:GetSelectedID() == nil or AmmoModelSelect:GetSelectedID() == nil then
 				DLabel:SetText( "Ammunition\n\nKeeps guns shooty." )
 			else
-
 				local String = string.Explode( " ", CrateModel )
 				local AmmoCrate = String[1]..AmmoType..String[3]
-				local ShellVol = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*6.5)
 				local ShellLenMult = 6.5
-				local ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 
 				if Caliber < 40 then
 					if AmmoTypeSelect:GetValue() == "Anti Tank Guided Missile" then
 						AmmoTypeSelect:SetValue("High Explosive Anti Tank")
-						AmmoCrate = String[1].."HEAT"..String[3]
+						AmmoCrate = String[1] .. "HEAT" .. String[3]
 						AmmoType = "HEAT"
 					end
 				end
-				--NOTE: shell volume formula is pi * ( ( Caliber * 0.5*mm to inch multiplier)^2 )*Caliber*(mm to inch multiplier*shell length mult*2)
+
 				if AmmoBoxSelect:GetSelected() == "Howitzer" or AmmoBoxSelect:GetSelected() == "Autoloading Howitzer" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*4)
 					ShellLenMult = 4
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				elseif AmmoBoxSelect:GetSelected() == "Smoke Launcher" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*1.375)
 					ShellLenMult = 1.375
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				elseif AmmoBoxSelect:GetSelected() == "Grenade Launcher" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*3.5)
 					ShellLenMult = 3.5
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				elseif AmmoBoxSelect:GetSelected() == "Mortar" or  AmmoBoxSelect:GetSelected() == "AutoloadingMortar" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*2.75)
 					ShellLenMult = 2.75
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				elseif AmmoBoxSelect:GetSelected() == "Short Cannon" or AmmoBoxSelect:GetSelected() == "Heavy Machine Gun" or AmmoBoxSelect:GetSelected() == "Short Autoloader" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*5)
 					ShellLenMult = 5
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				elseif AmmoBoxSelect:GetSelected() == "Long Cannon" or AmmoBoxSelect:GetSelected() == "Long Autoloader" then
-					ShellVol 	 = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*(0.0393701*2*9)
 					ShellLenMult = 9
-					ShellVolSquare = ( ( Caliber*0.0393701 )^2 )*(Caliber*0.0393701*(ShellLenMult*2))
 				end
 
+				-- NOTE: shell volume formula is pi * ( ( Caliber * 0.5*mm to inch multiplier)^2 )*Caliber*(mm to inch multiplier*shell length mult*2)
+				local ShellVol = math.pi * ((Caliber * 0.01968505) ^ 2) * Caliber * (0.0393701 * 2 * ShellLenMult)
+				local ShellVolSquare = ((Caliber * 0.0393701) ^ 2) * (Caliber * 0.0393701 * (ShellLenMult * 2))
 				local ShellMass = ShellVol * 0.044
-				AmmoCount 		= math.floor(Volume/ShellVolSquare)
-				AmmoWeight 		= math.Round(10+(AmmoCount*ShellMass))
+				AmmoCount 		= math.floor(Volume / ShellVolSquare)
+				AmmoWeight 		= math.Round(10 + (AmmoCount * ShellMass))
 
 				if AmmoType == "ATGM" then
 					ShellVol = math.pi*( ( Caliber*0.01968505 )^2 )*Caliber*0.5118113 * 1.5
@@ -2720,7 +1869,7 @@ function TOOL.BuildCPanel( panel )
 	--Text Box
 	DLabel:SetPos( 15, 345 )
 	DLabel:SetText( "Select an entity and information for it will appear here" )
-	DLabel:SetTextColor( Color( 0, 0, 0, 255 ) )
+	DLabel:SetTextColor( DLabel:GetSkin().Colours.Label.Dark )
 	DLabel:SetAutoStretchVertical( true )
 	DLabel:SetWrap( true )
 	DLabel:SetVisible( true )
@@ -2729,29 +1878,12 @@ function TOOL.BuildCPanel( panel )
 	AmmoBoxSelect:SetPos( 15, 345 )
 	AmmoBoxSelect:SetSortItems( false )
 	AmmoBoxSelect:SetValue( "--Select Weapon--" )
-	AmmoBoxSelect:AddChoice( "Autocannon" )
-	AmmoBoxSelect:AddChoice( "Autoloader" )
-	AmmoBoxSelect:AddChoice( "Long Autoloader" )
-	AmmoBoxSelect:AddChoice( "Short Autoloader" )
-	AmmoBoxSelect:AddChoice( "Autoloading Howitzer" )
-	AmmoBoxSelect:AddChoice( "Autoloading Mortar" )
-	AmmoBoxSelect:AddChoice( "Short Cannon" )
-	AmmoBoxSelect:AddChoice( "Cannon" )
-	AmmoBoxSelect:AddChoice( "ATGM Launcher" )
-	AmmoBoxSelect:AddChoice( "Dual ATGM Launcher" )
-	AmmoBoxSelect:AddChoice( "Autoloading ATGM Launcher" )
-	AmmoBoxSelect:AddChoice( "Autoloading Dual ATGM Launcher" )
-	AmmoBoxSelect:AddChoice( "Recoilless Rifle" )
-	AmmoBoxSelect:AddChoice( "Autoloading Recoilless Rifle" )
-	AmmoBoxSelect:AddChoice( "Long Cannon" )
-	AmmoBoxSelect:AddChoice( "Flamethrower" )
-	AmmoBoxSelect:AddChoice( "Heavy Machine Gun" )
-	AmmoBoxSelect:AddChoice( "Howitzer" )
-	AmmoBoxSelect:AddChoice( "Machine Gun" )
-	AmmoBoxSelect:AddChoice( "Smoke Launcher" )
-	AmmoBoxSelect:AddChoice( "Grenade Launcher" )
-	AmmoBoxSelect:AddChoice( "Mortar" )
-	AmmoBoxSelect.OnSelect = function( panel, index, value )
+
+	for ClassName, ClassData in SortedPairs( Classes.Weapons ) do
+		AmmoBoxSelect:AddChoice( ClassData.Name or ClassName )
+	end
+
+	AmmoBoxSelect.OnSelect = function( _, _, value )
 		GunType = value
 		gunData[value]()
 		DermaNumSlider:SetValue( math.Clamp(DermaNumSlider:GetValue(),DermaNumSlider:GetMin(),DermaNumSlider:GetMax()) )
@@ -2799,7 +1931,7 @@ function TOOL.BuildCPanel( panel )
 	AmmoModelSelect:AddChoice( "24x24x36 Ammo Box" )
 	AmmoModelSelect:AddChoice( "24x36x36 Ammo Box" )
 	AmmoModelSelect:AddChoice( "24x36x48 Ammo Box" )
-	AmmoModelSelect.OnSelect = function( panel, index, value )
+	AmmoModelSelect.OnSelect = function( _, _, value )
 		CrateModel = value
 		crateList[value]()
 		updateUI()
@@ -2809,13 +1941,12 @@ function TOOL.BuildCPanel( panel )
 	FuelModelSelect:SetPos( 15, 345 )
 	FuelModelSelect:SetSortItems( false )
 	FuelModelSelect:SetValue( "--Select Fuel Tank--" )
-	FuelModelSelect:AddChoice( "Micro Fuel Tank" )
-	FuelModelSelect:AddChoice( "Small Fuel Tank" )
-	FuelModelSelect:AddChoice( "Standard Fuel Tank" )
-	FuelModelSelect:AddChoice( "Large Fuel Tank" )
-	FuelModelSelect:AddChoice( "Huge Fuel Tank" )
-	FuelModelSelect:AddChoice( "Ultra Fuel Tank" )
-	FuelModelSelect.OnSelect = function( panel, index, value )
+
+	for ClassName in SortedPairs( Classes.FuelTanks ) do
+		FuelModelSelect:AddChoice( ClassName )
+	end
+
+	FuelModelSelect.OnSelect = function( _, _, value )
 		FuelModel = value
 
 		updateUI()
@@ -2825,13 +1956,12 @@ function TOOL.BuildCPanel( panel )
 	EngineModelSelect:SetPos( 15, 345 )
 	EngineModelSelect:SetSortItems( false )
 	EngineModelSelect:SetValue( "--Select Engine--" )
-	EngineModelSelect:AddChoice( "Micro Engine" )
-	EngineModelSelect:AddChoice( "Small Engine" )
-	EngineModelSelect:AddChoice( "Standard Engine" )
-	EngineModelSelect:AddChoice( "Large Engine" )
-	EngineModelSelect:AddChoice( "Huge Engine" )
-	EngineModelSelect:AddChoice( "Ultra Engine" )
-	EngineModelSelect.OnSelect = function( panel, index, value )
+
+	for ClassName in SortedPairs( Classes.Engines ) do
+		EngineModelSelect:AddChoice( ClassName )
+	end
+
+	EngineModelSelect.OnSelect = function( _, _, value )
 		EngineModel = value
 
 		updateUI()
@@ -2842,7 +1972,7 @@ function TOOL.BuildCPanel( panel )
 	GearboxDirectionSelect:SetValue( "--Select Direction--" )
 	GearboxDirectionSelect:AddChoice( "Frontal Mount" )
 	GearboxDirectionSelect:AddChoice( "Rear Mount" )
-	GearboxDirectionSelect.OnSelect = function( panel, index, value )
+	GearboxDirectionSelect.OnSelect = function( _, _, value )
 		GearboxDirection = string.Explode( " ", value )[1]
 
 		updateUI()
@@ -2858,7 +1988,7 @@ function TOOL.BuildCPanel( panel )
 	GearboxModelSelect:AddChoice( "Large Gearbox" )
 	GearboxModelSelect:AddChoice( "Huge Gearbox" )
 	GearboxModelSelect:AddChoice( "Ultra Gearbox" )
-	GearboxModelSelect.OnSelect = function( panel, index, value )
+	GearboxModelSelect.OnSelect = function( _, _, value )
 		GearboxModel = value
 
 		updateUI()
@@ -2871,7 +2001,7 @@ function TOOL.BuildCPanel( panel )
 	AutoloaderMagazineSelect:AddChoice( "Small Autoloader Magazine" )
 	AutoloaderMagazineSelect:AddChoice( "Medium Autoloader Magazine" )
 	AutoloaderMagazineSelect:AddChoice( "Large Autoloader Magazine" )
-	AutoloaderMagazineSelect.OnSelect = function( panel, index, value )
+	AutoloaderMagazineSelect.OnSelect = function( _, _, value )
 		AutoloaderMagazine = value
 
 		updateUI()
@@ -2884,7 +2014,7 @@ function TOOL.BuildCPanel( panel )
 	TurretMotorSelect:AddChoice( "Small Turret Motor" )
 	TurretMotorSelect:AddChoice( "Medium Turret Motor" )
 	TurretMotorSelect:AddChoice( "Large Turret Motor" )
-	TurretMotorSelect.OnSelect = function( panel, index, value )
+	TurretMotorSelect.OnSelect = function( _, _, value )
 		TurretMotor = value
 
 		updateUI()

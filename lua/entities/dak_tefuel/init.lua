@@ -1,14 +1,18 @@
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
+
 local DTTE = DTTE
-ENT.DakName = "Fuel Tank"
+local FuelTanks = DTTE.Classes.FuelTanks
+
+ENT.DakName = "Standard Fuel Tank"
 ENT.DakIsExplosive = true
 ENT.DakArmor = 10
 ENT.DakMaxHealth = 10
 ENT.DakHealth = 10
 ENT.DakPooled = 0
 ENT.DakFuel = 0
+
 local function RecurseTrace(start, endpos, filter)
 	local trace = {}
 	trace.start = start
@@ -21,7 +25,7 @@ local function RecurseTrace(start, endpos, filter)
 		local Class = FireTrace.Entity:GetClass()
 		if Class == "dak_crew" or Class == "dak_teammo" or Class == "dak_teautoloadingmodule" or Class == "dak_tefuel" or Class == "dak_tegearbox" or Class == "dak_temotor" or Class == "dak_turretmotor" then FireTrace.Entity:Ignite(60, 0) end
 		if FireTrace.Entity.DakArmor == nil then DTTE.SetupNewEnt(FireTrace.Entity) end
-		if FireTrace.Entity.DakArmor < 5 or DTCheckClip(FireTrace.Entity, FireTrace.HitPos) then
+		if FireTrace.Entity.DakArmor < 5 or DTTE.CheckClip(FireTrace.Entity, FireTrace.HitPos) then
 			filter[#filter + 1] = FireTrace.Entity
 			RecurseTrace(start, endpos, filter)
 		end
@@ -46,6 +50,7 @@ function ENT:Think()
 	local selfTbl = self:GetTable()
 
 	DTTE.CheckSpherical(self)
+
 	if selfTbl.DakDead ~= true then
 		if CurTime() >= selfTbl.SparkTime + 0.33 then
 			local scale
@@ -76,27 +81,16 @@ function ENT:Think()
 		selfTbl.DakFuel = 0
 	end
 
-	local fuelTankStats = {
-		--This should probably be defined somewhere else entirely. But for the moment, this is at least an improvement.
-		["Micro Fuel Tank"] = {65, 45, 10},
-		["Small Fuel Tank"] = {120, 90, 20},
-		["Standard Fuel Tank"] = {240, 180, 30},
-		["Large Fuel Tank"] = {475, 360, 40},
-		["Huge Fuel Tank"] = {950, 720, 50},
-		["Ultra Fuel Tank"] = {1900, 1440, 60}
-	}
-
-	if fuelTankStats[selfTbl.DakName] then
-		selfTbl.DakMass = fuelTankStats[selfTbl.DakName][1]
-		selfTbl.DakFuel = fuelTankStats[selfTbl.DakName][2]
-		selfTbl.DakMaxHealth = fuelTankStats[selfTbl.DakName][3]
-	end
+	local curFuelTank = FuelTanks[selfTbl.DakName]
+	selfTbl.DakMass = curFuelTank.Mass
+	selfTbl.DakFuel = curFuelTank.Fuel
+	selfTbl.DakMaxHealth = curFuelTank.MaxHealth
 
 	if selfTbl.DakHealth > selfTbl.DakMaxHealth then selfTbl.DakHealth = selfTbl.DakMaxHealth end
 	selfTbl.DakFuel = selfTbl.DakFuel * (selfTbl.DakHealth / selfTbl.DakMaxHealth)
 	if self:GetPhysicsObject():GetMass() ~= selfTbl.DakMass then self:GetPhysicsObject():SetMass(selfTbl.DakMass) end
 	if selfTbl.DakDead ~= true and self:IsOnFire() then
-		for i = 1, 10 do
+		for _ = 1, 10 do
 			local Direction = VectorRand()
 			local trace = {}
 			trace.start = self:GetPos()
@@ -109,7 +103,7 @@ function ENT:Think()
 				local Class = FireTrace.Entity:GetClass()
 				if Class == "dak_crew" or Class == "dak_teammo" or Class == "dak_teautoloadingmodule" or Class == "dak_tefuel" or Class == "dak_tegearbox" or Class == "dak_temotor" or Class == "dak_turretmotor" then FireTrace.Entity:Ignite(60, 0) end
 				if FireTrace.Entity.DakArmor == nil then DTTE.SetupNewEnt(FireTrace.Entity) end
-				if FireTrace.Entity.DakArmor < 5 or DTCheckClip(FireTrace.Entity, FireTrace.HitPos) then RecurseTrace(self:GetPos(), self:GetPos() + Direction * 50, {self, FireTrace.Entity}) end
+				if FireTrace.Entity.DakArmor < 5 or DTTE.CheckClip(FireTrace.Entity, FireTrace.HitPos) then RecurseTrace(self:GetPos(), self:GetPos() + Direction * 50, {self, FireTrace.Entity}) end
 			end
 		end
 
@@ -121,7 +115,7 @@ function ENT:Think()
 	return true
 end
 
-function ENT:DTOnTakeDamage(Damage)
+function ENT:DTOnTakeDamage()
 	if self.DakDead then return end
 	if self.DakHealth <= 0 then
 		if self.DakOwner:IsPlayer() and self.DakOwner ~= NULL then self.DakOwner:ChatPrint(self.DakName .. " Destroyed!") end
@@ -136,13 +130,14 @@ end
 
 function ENT:PreEntityCopy()
 	local info = {}
-	-- local entids = {}
 	info.DakName = self.DakName
 	info.DakIsExplosive = self.DakIsExplosive
 	info.DakMaxHealth = self.DakMaxHealth
 	info.DakHealth = self.DakHealth
 	info.DakOwner = self.DakOwner
+
 	duplicator.StoreEntityModifier(self, "DakTek", info)
+
 	-- Wire dupe info
 	self.BaseClass.PreEntityCopy(self)
 end

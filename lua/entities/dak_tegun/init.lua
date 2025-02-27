@@ -1,9 +1,11 @@
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
-
 include("shared.lua")
 
 util.AddNetworkString("daktankshotfired")
+
+local DTTE = DTTE
+local Weapons = DTTE.Classes.Weapons
 
 ENT.DakOwner = NULL
 ENT.DakName = "Base Gun"
@@ -34,6 +36,10 @@ ENT.DakTankCore = nil
 ENT.DakCrew = NULL
 ENT.BasicVelocity = 29527.6
 ENT.muzzle = NULL
+ENT.ShellLengthMult = 1
+ENT.ShellLengthExact = 1
+ENT.DakGunType = "N/A"
+ENT.DakCaliber = 0
 
 function ENT:Initialize()
 	self.ShellLoaded = 0
@@ -86,35 +92,6 @@ function ENT:Initialize()
 	self.muzzle:Activate()
 	self.muzzle:SetMoveType(MOVETYPE_NONE)
 	self.muzzle:PhysicsInit(SOLID_NONE)
-end
-
-local function setCannonSound(ent, caliber)
-	if ent.DakFireSound1 ~= nil then return end
-
-	if caliber < 37 then
-		ent.DakFireSound1 = "daktanks/c25.mp3"
-	end
-	if caliber >= 37 and caliber < 50 then
-		ent.DakFireSound1 = "daktanks/c37.mp3"
-	end
-	if caliber >= 50 and caliber < 75 then
-		ent.DakFireSound1 = "daktanks/c50.mp3"
-	end
-	if caliber >= 75 and caliber < 100 then
-		ent.DakFireSound1 = "daktanks/c75.mp3"
-	end
-	if caliber >= 100 and caliber < 120 then
-		ent.DakFireSound1 = "daktanks/c100.mp3"
-	end
-	if caliber >= 120 and caliber < 152 then
-		ent.DakFireSound1 = "daktanks/c120.mp3"
-	end
-	if caliber >= 152 and caliber < 200 then
-		ent.DakFireSound1 = "daktanks/c152.mp3"
-	end
-	if caliber >= 200 then
-		ent.DakFireSound1 = "daktanks/c200.mp3"
-	end
 end
 
 function ENT:Think()
@@ -208,11 +185,11 @@ function ENT:Think()
 				local startPos = self:GetPos() + self:GetForward() * breechoffset
 				local caliber = self.DakCaliber * 0.5
 				local filter = {self, self:GetParent(), self:GetParent():GetParent()}
-				local BackDist = DTSimpleRecurseTrace(startPos, startPos - (self:GetForward() * 1000), caliber, filter, self, false)
-				local LeftDist = DTSimpleRecurseTrace(startPos, startPos - (self:GetRight() * 1000), caliber, filter, self, false)
-				local RightDist = DTSimpleRecurseTrace(startPos, startPos + (self:GetRight() * 1000), caliber, filter, self, false)
-				local UpDist = DTSimpleRecurseTrace(startPos, startPos + (self:GetUp() * 1000), caliber, filter, self, false)
-				local DownDist = DTSimpleRecurseTrace(startPos, startPos - (self:GetUp() * 1000), caliber, filter, self, false)
+				local BackDist = DTTE.SimpleRecurseTrace(startPos, startPos - (self:GetForward() * 1000), caliber, filter, self, false)
+				local LeftDist = DTTE.SimpleRecurseTrace(startPos, startPos - (self:GetRight() * 1000), caliber, filter, self, false)
+				local RightDist = DTTE.SimpleRecurseTrace(startPos, startPos + (self:GetRight() * 1000), caliber, filter, self, false)
+				local UpDist = DTTE.SimpleRecurseTrace(startPos, startPos + (self:GetUp() * 1000), caliber, filter, self, false)
+				local DownDist = DTTE.SimpleRecurseTrace(startPos, startPos - (self:GetUp() * 1000), caliber, filter, self, false)
 				local ShellSize = (self.ShellLengthMult * 10 * self.DakCaliber * 0.0393701)
 				if self.ReloadMult == nil then
 					local quickmult = ( math.min((BackDist/ShellSize),2) + math.min((LeftDist/ShellSize),2) + math.min((RightDist/ShellSize),2) + math.min((UpDist/ShellSize),2) + math.min((DownDist/ShellSize),2) )*0.2
@@ -256,153 +233,17 @@ function ENT:Think()
 	end
 
 	if CurTime() >= self.SlowThinkTime + 1 then
-		local ammoPrefix = ""
-		local sizeMult = 1
+		local curGun = Weapons[self.DakGunType]
+		local ammoPrefix = curGun.ShortName or ""
+		local sizeMult = curGun.SizeMult or 1
 
-		if self.DakGunType == "Short Cannon" then
-			ammoPrefix = "SC"
+		self.ShellLengthMult = curGun.ShellLengthMult or 1
+		self.ShellLengthExact = curGun.ShellLengthExact or 1
+		self.recoilless = curGun.Recoilless or false
+		self.ReadyRounds = curGun.ReadyRounds or 0
 
-			self.ShellLengthMult = 40 / 50
-			self.ShellLengthExact = 5
-
-			setCannonSound(self, self.DakCaliber)
-		end
-
-		if self.DakGunType == "Cannon" then
-			ammoPrefix = "C"
-
-			self.ShellLengthMult = 50 / 50
-			self.ShellLengthExact = 6.5
-
-			setCannonSound(self, self.DakCaliber)
-		end
-
-		if self.DakGunType == "Long Cannon" then
-			ammoPrefix = "LC"
-
-			self.ShellLengthMult = 70 / 50
-			self.ShellLengthExact = 9
-
-			setCannonSound(self, self.DakCaliber)
-		end
-
-		if self.DakGunType == "Howitzer" then
-			ammoPrefix = "H"
-
-			self.ShellLengthMult = 30 / 50
-			self.ShellLengthExact = 4
-
-			if self.DakFireSound1 == nil then
-				if self.DakCaliber < 75 then
-					self.DakFireSound1 = "daktanks/h50.mp3"
-				end
-				if self.DakCaliber >= 75 and self.DakCaliber < 105 then
-					self.DakFireSound1 = "daktanks/h75.mp3"
-				end
-				if self.DakCaliber >= 105 and self.DakCaliber < 122 then
-					self.DakFireSound1 = "daktanks/h105.mp3"
-				end
-				if self.DakCaliber >= 122 and self.DakCaliber < 155 then
-					self.DakFireSound1 = "daktanks/h122.mp3"
-				end
-				if self.DakCaliber >= 155 and self.DakCaliber < 203 then
-					self.DakFireSound1 = "daktanks/h155.mp3"
-				end
-				if self.DakCaliber >= 203 and self.DakCaliber < 420 then
-					self.DakFireSound1 = "daktanks/h203.mp3"
-				end
-				if self.DakCaliber >= 420 then
-					self.DakFireSound1 = "daktanks/h420.mp3"
-				end
-			end
-		end
-
-		if self.DakGunType == "Mortar" then
-			ammoPrefix = "M"
-
-			self.ShellLengthMult = 15 / 50
-			self.ShellLengthExact = 2.75
-
-			if self.DakFireSound1 == nil then
-				if self.DakCaliber < 90 then
-					self.DakFireSound1 = "daktanks/m60.mp3"
-				end
-				if self.DakCaliber >= 90 and self.DakCaliber < 120 then
-					self.DakFireSound1 = "daktanks/m90.mp3"
-				end
-				if self.DakCaliber >= 120 and self.DakCaliber < 150 then
-					self.DakFireSound1 = "daktanks/m120.mp3"
-				end
-				if self.DakCaliber >= 150 and self.DakCaliber < 240 then
-					self.DakFireSound1 = "daktanks/m150.mp3"
-				end
-				if self.DakCaliber >= 240 and self.DakCaliber < 280 then
-					self.DakFireSound1 = "daktanks/m240.mp3"
-				end
-				if self.DakCaliber >= 280 and self.DakCaliber < 420 then
-					self.DakFireSound1 = "daktanks/m280.mp3"
-				end
-				if self.DakCaliber >= 420 and self.DakCaliber < 600 then
-					self.DakFireSound1 = "daktanks/m420.mp3"
-				end
-				if self.DakCaliber >= 600 then
-					self.DakFireSound1 = "daktanks/m600.mp3"
-				end
-			end
-		end
-
-		if self.DakGunType == "ATGM Launcher" then
-			sizeMult = 0.0125
-			ammoPrefix = "L"
-
-			self.ShellLengthMult = 50 / 50
-			self.ShellLengthExact = 6.5
-
-			if self.DakFireSound1 == nil then
-				self.DakFireSound1 = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-			end
-		end
-
-		if self.DakGunType == "Dual ATGM Launcher" then
-			sizeMult = 0.02
-			ammoPrefix = "L"
-
-			self.ShellLengthMult = 50 / 50
-			self.ShellLengthExact = 6.5
-
-			if self.DakFireSound1 == nil then
-				self.DakFireSound1 = "daktanks/new/cannons/misc/tank_rocket_shot_1.mp3"
-			end
-
-			self.ReadyRounds = 2
-		end
-
-		if self.DakGunType == "Recoilless Rifle" then
-			self.recoilless = true
-
-			sizeMult = 0.2
-			ammoPrefix = "RR"
-
-			self.ShellLengthMult = 25 / 50
-			self.ShellLengthExact = 6.5
-
-			if self.DakFireSound1 == nil then
-				if self.DakCaliber < 50 then
-					self.DakFireSound1 = "daktanks/new/cannons/37mm/cannon_37mm_kwk36_shot_01.mp3"
-				end
-				if self.DakCaliber >= 50 and self.DakCaliber < 70 then
-					self.DakFireSound1 = "daktanks/new/cannons/57mm/cannon_57mm_zis4_shot_01.mp3"
-				end
-				if self.DakCaliber >= 70 and self.DakCaliber < 90 then
-					self.DakFireSound1 = "daktanks/new/cannons/85mm/cannon_85mm_zis_c53_shot_01.mp3"
-				end
-				if self.DakCaliber >= 90 and self.DakCaliber < 110 then
-					self.DakFireSound1 = "daktanks/new/cannons/105mm/cannon_105mm_m4_shot_01.mp3"
-				end
-				if self.DakCaliber >= 110 then
-					self.DakFireSound1 = "daktanks/new/cannons/120mm/cannon_120mm_rh120_shot_01.mp3"
-				end
-			end
+		if curGun.SetSound and self.DakFireSound1 == nil then
+			self.DakFireSound1 = curGun.SetSound(self.DakCaliber)
 		end
 
 		local shellLength = self.ShellLengthMult * 50
@@ -457,11 +298,16 @@ function ENT:Think()
 			self.ReloadSound = "daktanks/dakreloadheavy.mp3"
 		end
 
-		if self:GetPhysicsObject():IsValid() and self:GetPhysicsObject():GetMass() ~= self.DakMass then
-			self:GetPhysicsObject():SetMass(self.DakMass)
+		local physObj = self:GetPhysicsObject()
+
+		if physObj:IsValid() then
+			if physObj:GetMass() ~= self.DakMass then
+				physObj:SetMass(self.DakMass)
+			end
+
+			self.DakArmor = 3.90625 * (physObj:GetMass() / 4.6311781) * (288 / physObj:GetSurfaceArea()) - self.DakBurnStacks * 0.25
 		end
 
-		self.DakArmor = 3.90625 * (self:GetPhysicsObject():GetMass() / 4.6311781) * (288 / self:GetPhysicsObject():GetSurfaceArea()) - self.DakBurnStacks * 0.25
 		self.SlowThinkTime = CurTime()
 	end
 
