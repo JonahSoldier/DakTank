@@ -149,7 +149,7 @@ function TOOL:LeftClick( trace )
 			self.DakHealth = SelectedClass.MaxHealth
 			self.DakModel = SelectedClass.Model
 		end
-		--Crew
+	--Crew
 		if Selection == "CrewSitting" then
 			self.DakMaxHealth = 5
 			self.DakHealth = 5
@@ -168,7 +168,7 @@ function TOOL:LeftClick( trace )
 			self.DakName = "Crew"
 			self.DakModel = "models/daktanks/crewdriver.mdl"
 		end
-		--Fuel
+	--Fuel
 		SelectedClass = Classes.FuelTanks[Selection]
 
 		if SelectedClass then
@@ -187,7 +187,7 @@ function TOOL:LeftClick( trace )
 			self.DakModel = SelectedClass.Model
 			self.DakSound = SelectedClass.Sound
 		end
-		--GEARBOXES
+	--GEARBOXES
 		if Selection == "MicroGearboxF" then
 			self.DakName = "Micro Frontal Mount Gearbox"
 			self.DakHealth = 7.5
@@ -260,7 +260,7 @@ function TOOL:LeftClick( trace )
 			self.DakMaxHealth = 480
 			self.DakModel = "models/daktanks/gearbox1r6.mdl"
 		end
-		--CLIPS--
+	--CLIPS--
 		if Selection == "SALMagazine" then
 			self.DakMaxHealth = 50
 			self.DakHealth = 50
@@ -279,7 +279,7 @@ function TOOL:LeftClick( trace )
 			self.DakName = "Large Autoloader Magazine"
 			self.DakModel = "models/daktanks/alclip3.mdl"
 		end
-		--GUNS--
+	--GUNS--
 		SelectedClass = Classes.Weapons[Selection]
 
 		if SelectedClass then
@@ -293,7 +293,7 @@ function TOOL:LeftClick( trace )
 			self.DakModel = SelectedClass.Model
 			self.DakFireSound = SelectedClass.SetSound(self.DakCaliber)
 		end
-		--AMMO--
+	--AMMO--
 		--Define variables--
 		local boxname = (string.Split( Selection, "" ))
 		if boxname[#boxname-4] == "A" and boxname[#boxname-3] == "P" then
@@ -352,95 +352,19 @@ function TOOL:LeftClick( trace )
 			self.AmmoType = "SM"
 		end
 		if self.IsAmmoCrate == 1 then
-			if self:GetClientInfo("DTTE_AmmoType") == "Cannon" then
-				self.GunType = "C"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
+			local SelectedClass = DTTE.Classes.Weapons[self:GetClientInfo("DTTE_AmmoType")]
+
+			if SelectedClass then
+				self.GunType = SelectedClass.ShortName
+				local min, max = SelectedClass.MinCaliber, SelectedClass.MaxCaliber
+				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),min,max)
 			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Long Cannon" then
-				self.GunType = "LC"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Short Cannon" then
-				self.GunType = "SC"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Howitzer" then
-				self.GunType = "H"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),50,240)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Smoke Launcher" then
-				self.GunType = "SL"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,100)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Grenade Launcher" then
-				self.GunType = "GL"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,45)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Mortar" then
-				self.GunType = "M"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,420)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloader" then
-				self.GunType = "C"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Long Autoloader" then
-				self.GunType = "LC"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Short Autoloader" then
-				self.GunType = "SC"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),25,200)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloading Howitzer" then
-				self.GunType = "H"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),50,240)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloading Mortar" then
-				self.GunType = "M"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,420)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autocannon" then
-				self.GunType = "AC"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,90)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "MG" then
-				self.GunType = "MG"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),5,25)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "HMG" then
-				self.GunType = "HMG"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,75)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "ATGM Launcher" then
-				self.GunType = "L"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Dual ATGM Launcher" then
-				self.GunType = "L"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloading ATGM Launcher" then
-				self.GunType = "L"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloading Dual ATGM Launcher" then
-				self.GunType = "L"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),40,180)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Recoilless Rifle" then
-				self.GunType = "RR"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,150)
-			end
-			if self:GetClientInfo("DTTE_AmmoType") == "Autoloading Recoilless Rifle" then
-				self.GunType = "RR"
-				self.DakCaliber = math.Clamp(math.Round(tonumber(self:GetClientInfo("DTTE_GunCaliber")),2),20,150)
-			end
-		    --huge if statement that checks to see if its an ammo crate of any type
+
+		    --TODO: Split DakAmmoType into multiple variables, and slowly transition to using those instead.
 			self.DakIsExplosive = true
 			self.DakAmmoType = self.DakCaliber .. "mm" .. self.GunType .. self.AmmoType .. "Ammo"
 		end
-		--Flamethrower--
+	--Flamethrower--
 		if Selection == "Flamethrower Fuel" then
 			self.DakIsHE = true
 			self.DakCaliber = 10
@@ -451,7 +375,7 @@ function TOOL:LeftClick( trace )
 			self.DakAmmoType = "Flamethrower Fuel"
 			self.spawnedent:SetModel( "models/props_c17/canister_propane01a.mdl" )
 		end
-		--Guns--
+	--Guns--
 		if self:GetClientInfo("SpawnEnt") == "dak_tegun" or self:GetClientInfo("SpawnEnt") == "dak_teautogun" or self:GetClientInfo("SpawnEnt") == "dak_temachinegun" then
 			self.spawnedent.DakOwner = self:GetOwner()
 			self.spawnedent.DakGunType = self.DakGunType
@@ -462,146 +386,79 @@ function TOOL:LeftClick( trace )
 			self.spawnedent:SetModel(self.spawnedent.DakModel)
 		end
 		--
-		if self:GetClientInfo("SpawnEnt") == "dak_teammo" and Selection == "Flamethrower Fuel" then
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_teammo" then
-					trace.Entity.DakName = self.DakAmmoType
-					trace.Entity.DakIsExplosive = self.DakIsExplosive
-					trace.Entity.DakAmmoType = self.DakAmmoType
-					trace.Entity.DakOwner = self:GetOwner()
-					trace.Entity.DakIsHE = self.DakIsHE
-					self:GetOwner():ChatPrint("Ammo updated.")
-				else
-					self.spawnedent.DakName = self.DakAmmoType
-					self.spawnedent.DakIsExplosive = self.DakIsExplosive
-					self.spawnedent.DakAmmoType = self.DakAmmoType
-					self.spawnedent.DakOwner = self:GetOwner()
-					self.spawnedent.DakIsHE = self.DakIsHE
+		if self:GetClientInfo("SpawnEnt") == "dak_teammo" then 
+			local model
+			if not(Selection == "Flamethrower Fuel") then
+				local boxtype = string.Explode( " ", Selection )[1]
+				local first = string.Explode( "x", boxtype )[1]
+				local second = string.Explode( "x", boxtype )[2]
+				local third1 = string.Explode( "x", boxtype )[3][1]
+				local third2 = string.Explode( "x", boxtype )[3][2]
+
+				local third = third1 .. third2
+
+				if first == "6" and second == "6" and third1 == "3" then
+					model = "models/daktanks/ammo7.mdl"
+				elseif first == "6" and second == "6" and third1 == "6" then
+					model = "models/daktanks/ammo8.mdl"
+				elseif first == "12" and second == "12" and third1 == "6" then
+					model = "models/daktanks/ammo9.mdl"
+				elseif first == "12" and second == "12" and third == "12" then
+					model = "models/daktanks/ammo10.mdl"
+				elseif first == "24" and second == "12" and third == "12" then
+					model = "models/daktanks/ammo1.mdl"
+				elseif first == "24" and second == "24" and third == "12" then
+					model = "models/daktanks/ammo2.mdl"
+				elseif first == "24" and second == "24" and third == "24" then
+					model = "models/daktanks/ammo3.mdl"
+				elseif first == "24" and second == "24" and third == "36" then
+					model = "models/daktanks/ammo4.mdl"
+				elseif first == "24" and second == "36" and third == "36" then
+					model = "models/daktanks/ammo5.mdl"
+				elseif first == "24" and second == "36" and third == "48" then
+					model = "models/daktanks/ammo6.mdl"
 				end
 			end
-			if not(trace.Entity:IsValid()) then
+
+			if trace.Entity and trace.Entity:GetClass() == "dak_teammo" then
+				trace.Entity.DakName = self.DakAmmoType
+				trace.Entity.DakIsExplosive = self.DakIsExplosive
+				trace.Entity.DakAmmoType = self.DakAmmoType
+				trace.Entity.DakOwner = self:GetOwner()
+				trace.Entity.DakIsHE = self.DakIsHE
+				trace.Entity.DakAmmo = 0
+				self:GetOwner():ChatPrint("Ammo updated.")
+			else
 				self.spawnedent.DakName = self.DakAmmoType
 				self.spawnedent.DakIsExplosive = self.DakIsExplosive
 				self.spawnedent.DakAmmoType = self.DakAmmoType
 				self.spawnedent.DakOwner = self:GetOwner()
 				self.spawnedent.DakIsHE = self.DakIsHE
-			end
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_teammo" and not(Selection == "Flamethrower Fuel") then
-			local boxtype = string.Explode( " ", Selection )[1]
-			local first = string.Explode( "x", boxtype )[1]
-			local second = string.Explode( "x", boxtype )[2]
-			local third1 = string.Explode( "x", boxtype )[3][1]
-			local third2 = string.Explode( "x", boxtype )[3][2]
-			if trace.Entity then
-				if trace.Entity:GetClass() == "dak_teammo" then
-					trace.Entity.DakName = self.DakAmmoType
-					trace.Entity.DakIsExplosive = self.DakIsExplosive
-					trace.Entity.DakAmmoType = self.DakAmmoType
-					trace.Entity.DakOwner = self:GetOwner()
-					trace.Entity.DakIsHE = self.DakIsHE
-					trace.Entity.DakAmmo = 0
-					self:GetOwner():ChatPrint("Ammo updated.")
-				else
-					self.spawnedent.DakName = self.DakAmmoType
-					self.spawnedent.DakIsExplosive = self.DakIsExplosive
-					self.spawnedent.DakAmmoType = self.DakAmmoType
-					self.spawnedent.DakOwner = self:GetOwner()
-					self.spawnedent.DakIsHE = self.DakIsHE
-					self.spawnedent.DakAmmo = 0
-					if first == "6" and second == "6" and third1 == "3" then
-						self.spawnedent:SetModel( "models/daktanks/ammo7.mdl" )
-					end
-					if first == "6" and second == "6" and third1 == "6" then
-						self.spawnedent:SetModel( "models/daktanks/ammo8.mdl" )
-					end
-					if first == "12" and second == "12" and third1 == "6" then
-						self.spawnedent:SetModel( "models/daktanks/ammo9.mdl" )
-					end
-					if first == "12" and second == "12" and third1 == "1" and third2 == "2" then
-						self.spawnedent:SetModel( "models/daktanks/ammo10.mdl" )
-					end
-					if first == "24" and second == "12" and third1 == "1" and third2 == "2" then
-						self.spawnedent:SetModel( "models/daktanks/ammo1.mdl" )
-					end
-					if first == "24" and second == "24" and third1 == "1" and third2 == "2" then
-						self.spawnedent:SetModel( "models/daktanks/ammo2.mdl" )
-					end
-					if first == "24" and second == "24" and third1 == "2" and third2 == "4" then
-						self.spawnedent:SetModel( "models/daktanks/ammo3.mdl" )
-					end
-					if first == "24" and second == "24" and third1 == "3" and third2 == "6" then
-						self.spawnedent:SetModel( "models/daktanks/ammo4.mdl" )
-					end
-					if first == "24" and second == "36" and third1 == "3" and third2 == "6" then
-						self.spawnedent:SetModel( "models/daktanks/ammo5.mdl" )
-					end
-					if first == "24" and second == "36" and third1 == "4" and third2 == "8" then
-						self.spawnedent:SetModel( "models/daktanks/ammo6.mdl" )
-					end
+
+				if model then
+					self.spawnedent:SetModel(model)
 				end
 			end
-			if not(trace.Entity:IsValid()) then
-				self.spawnedent.DakName = self.DakAmmoType
-				self.spawnedent.DakIsExplosive = self.DakIsExplosive
-				self.spawnedent.DakAmmoType = self.DakAmmoType
-				self.spawnedent.DakOwner = self:GetOwner()
-				self.spawnedent.DakIsHE = self.DakIsHE
-				if first == "6" and second == "6" and third == "3" then
-					self.spawnedent:SetModel( "models/daktanks/ammo7.mdl" )
-				end
-				if first == "6" and second == "6" and third == "6" then
-					self.spawnedent:SetModel( "models/daktanks/ammo8.mdl" )
-				end
-				if first == "12" and second == "12" and third == "6" then
-					self.spawnedent:SetModel( "models/daktanks/ammo9.mdl" )
-				end
-				if first == "12" and second == "12" and third == "12" then
-					self.spawnedent:SetModel( "models/daktanks/ammo10.mdl" )
-				end
-				if first == "24" and second == "12" and third == "12" then
-					self.spawnedent:SetModel( "models/daktanks/ammo1.mdl" )
-				end
-				if first == "24" and second == "24" and third == "12" then
-					self.spawnedent:SetModel( "models/daktanks/ammo2.mdl" )
-				end
-				if first == "24" and second == "24" and third == "24" then
-					self.spawnedent:SetModel( "models/daktanks/ammo3.mdl" )
-				end
-				if first == "24" and second == "24" and third == "36" then
-					self.spawnedent:SetModel( "models/daktanks/ammo4.mdl" )
-				end
-				if first == "24" and second == "36" and third == "36" then
-					self.spawnedent:SetModel( "models/daktanks/ammo5.mdl" )
-				end
-				if first == "24" and second == "36" and third == "48" then
-					self.spawnedent:SetModel( "models/daktanks/ammo6.mdl" )
-				end
-			end
-		end
+		end 
+
 		if self:GetClientInfo("SpawnEnt") == "dak_teautoloadingmodule" then
 			UpdateGenericEntity(self, trace.Entity, "dak_teautoloadingmodule", "Magazine", true)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_turretmotor" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_turretmotor" then
 			UpdateGenericEntity(self, trace.Entity, "dak_turretmotor", "Turret motor", true)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_crew" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_crew" then
 			UpdateGenericEntity(self, trace.Entity, "dak_crew", "Crew", true)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_temotor" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_temotor" then
 			UpdateGenericEntity(self, trace.Entity, "dak_temotor", "Engine", false)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_tefuel" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_tefuel" then
 			UpdateGenericEntity(self, trace.Entity, "dak_tefuel", "Fuel tank", false)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_tegearbox" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_tegearbox" then
 			UpdateGenericEntity(self, trace.Entity, "dak_tegearbox", "Gearbox", false)
-		end
-		if self:GetClientInfo("SpawnEnt") == "dak_tegearboxnew" then
+		elseif self:GetClientInfo("SpawnEnt") == "dak_tegearboxnew" then
 			UpdateGenericEntity(self, trace.Entity, "dak_tegearboxnew", "Gearbox", false)
 		end
 
 		self.ScalingGun = 0
+
 		if self.DakModel == "models/daktanks/mortar100mm2.mdl" then self.ScalingGun = 1 end
 		if self.DakModel == "models/daktanks/grenadelauncher100mm.mdl" then self.ScalingGun = 1 end
 		if self.DakModel == "models/daktanks/smokelauncher100mm.mdl" then self.ScalingGun = 1 end

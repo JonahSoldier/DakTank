@@ -68,7 +68,7 @@ function ENT:Think()
 		self:SetSolid(SOLID_VPHYSICS)
 	end
 
-	if selfTbl.DakHealth > selfTbl.DakMaxHealth then selfTbl.DakHealth = selfTbl.DakMaxHealth end
+	selfTbl.DakHealth = math.min(selfTbl.DakHealth, selfTbl.DakMaxHealth)
 
 	local physObj = self:GetPhysicsObject()
 	if selfTbl.DakMass and physObj:GetMass() ~= selfTbl.DakMass then
